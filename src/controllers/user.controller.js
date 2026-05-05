@@ -88,6 +88,32 @@ async function update(req, res, next) {
   }
 }
 
+async function resetPassword(req, res, next) {
+  try {
+    const { new_password } = req.body;
+    if (!new_password || new_password.length < 6)
+      return res.status(400).json({ message: 'Password minimal 6 karakter' });
+
+    const hash = await bcrypt.hash(new_password, 10);
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('id', sql.Int, req.params.id)
+      .input('password', sql.VarChar, hash)
+      .query(`
+        UPDATE auth_users
+        SET password = @password, updated_at = GETDATE()
+        WHERE id = @id
+      `);
+
+    if (result.rowsAffected[0] === 0)
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+
+    res.json({ message: 'Password berhasil direset' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function remove(req, res, next) {
   try {
     const pool = await getPool();
@@ -197,4 +223,4 @@ async function setUserMenus(req, res, next) {
   }
 }
 
-module.exports = { getAll, getById, create, update, remove, getRoles, assignRole, removeRole, getUserMenus, setUserMenus };
+module.exports = { getAll, getById, create, update, resetPassword, remove, getRoles, assignRole, removeRole, getUserMenus, setUserMenus };

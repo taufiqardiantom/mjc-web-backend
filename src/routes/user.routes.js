@@ -8,6 +8,7 @@ router.get('/', c.getAll);
 router.get('/:id', c.getById);
 router.post('/', c.create);
 router.put('/:id', c.update);
+router.patch('/:id/reset-password', c.resetPassword);
 router.delete('/:id', c.remove);
 
 router.get('/:id/roles', c.getRoles);
