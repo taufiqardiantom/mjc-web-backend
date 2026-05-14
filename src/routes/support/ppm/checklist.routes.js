@@ -5,6 +5,7 @@ const auth = require('../../../middleware/auth.middleware');
 router.use(auth);
 
 // ─── List & by-SPO (existing) ─────────────────────────────────────────────────
+router.get('/server-time', ctrl.getServerTime);
 router.get('/', ctrl.getAll);
 router.post('/byspo', ctrl.getByNospo);
 
@@ -28,6 +29,22 @@ router.post('/bahanpendukung/history', ctrl.getBahanPendukungHistory);
 
 // ─── Bulk Check ───────────────────────────────────────────────────────────────
 router.post('/bulk-check', ctrl.bulkCheck);
+
+// ─── Proses Cetak ─────────────────────────────────────────────────────────────
+router.post('/prosescetak/list', ctrl.getProsesCetak);
+router.post('/prosescetak/check', ctrl.saveProsesCetakCheck);
+router.post('/prosescetak/history', ctrl.getProsesCetakHistory);
+
+// ─── Proses Pasca Cetak ───────────────────────────────────────────────────────
+router.post('/prosespascacetak/list', ctrl.getProsesPascaCetak);
+router.post('/prosespascacetak/bulk-check', ctrl.bulkProsesPascaCetakCheck);
+router.post('/prosespascacetak/check', ctrl.saveProsesPascaCetakCheck);
+router.post('/prosespascacetak/history', ctrl.getProsesPascaCetakHistory);
+
+// ─── Artwork / File Materi ────────────────────────────────────────────────────
+router.post('/artwork/list', ctrl.getArtwork);
+router.post('/artwork/check', ctrl.saveFilemateriCheck);
+router.post('/artwork/history', ctrl.getFilemateriHistory);
 
 // ─── Report Harian ────────────────────────────────────────────────────────────
 router.post('/report/daily', ctrl.getDailyReport);

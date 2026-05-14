@@ -5,7 +5,7 @@ async function getAll(req, res, next) {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT u.id, u.username, u.full_name, u.email, u.is_active, u.created_at,
+      SELECT u.id, u.username, u.full_name, u.email, u.nik, u.is_active, u.created_at, u.last_seen,
              STUFF((
                SELECT ', ' + r2.role_name
                FROM auth_user_roles ur2
@@ -14,7 +14,7 @@ async function getAll(req, res, next) {
                FOR XML PATH(''), TYPE
              ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS roles
       FROM auth_users u
-      ORDER BY u.id
+      ORDER BY u.last_seen DESC, u.id
     `);
     res.json(result.recordset);
   } catch (err) {
@@ -27,7 +27,7 @@ async function getById(req, res, next) {
     const pool = await getPool();
     const result = await pool.request()
       .input('id', sql.Int, req.params.id)
-      .query('SELECT id, username, full_name, email, is_active, created_at FROM auth_users WHERE id = @id');
+      .query('SELECT id, username, full_name, email, nik, is_active, created_at FROM auth_users WHERE id = @id');
     if (!result.recordset[0]) return res.status(404).json({ message: 'User tidak ditemukan' });
     res.json(result.recordset[0]);
   } catch (err) {
@@ -37,7 +37,7 @@ async function getById(req, res, next) {
 
 async function create(req, res, next) {
   try {
-    const { username, password, full_name, email, is_active = 1 } = req.body;
+    const { username, password, full_name, email, nik, is_active = 1 } = req.body;
     if (!username || !password) {
       return res.status(400).json({ message: 'Username dan password wajib diisi' });
     }
@@ -48,11 +48,12 @@ async function create(req, res, next) {
       .input('password', sql.VarChar, hash)
       .input('full_name', sql.VarChar, full_name || null)
       .input('email', sql.VarChar, email || null)
+      .input('nik', sql.VarChar, nik || null)
       .input('is_active', sql.Bit, is_active)
       .query(`
-        INSERT INTO auth_users (username, password, full_name, email, is_active)
-        OUTPUT INSERTED.id, INSERTED.username, INSERTED.full_name, INSERTED.email, INSERTED.is_active
-        VALUES (@username, @password, @full_name, @email, @is_active)
+        INSERT INTO auth_users (username, password, full_name, email, nik, is_active)
+        OUTPUT INSERTED.id, INSERTED.username, INSERTED.full_name, INSERTED.email, INSERTED.nik, INSERTED.is_active
+        VALUES (@username, @password, @full_name, @email, @nik, @is_active)
       `);
     res.status(201).json(result.recordset[0]);
   } catch (err) {
@@ -63,15 +64,16 @@ async function create(req, res, next) {
 
 async function update(req, res, next) {
   try {
-    const { full_name, email, is_active, password } = req.body;
+    const { full_name, email, nik, is_active, password } = req.body;
     const pool = await getPool();
     const req2 = pool.request().input('id', sql.Int, req.params.id)
       .input('full_name', sql.VarChar, full_name || null)
       .input('email', sql.VarChar, email || null)
+      .input('nik', sql.VarChar, nik || null)
       .input('is_active', sql.Bit, is_active != null ? is_active : 1);
 
     let query = `
-      UPDATE auth_users SET full_name=@full_name, email=@email, is_active=@is_active, updated_at=GETDATE()
+      UPDATE auth_users SET full_name=@full_name, email=@email, nik=@nik, is_active=@is_active, updated_at=GETDATE()
     `;
     if (password) {
       const hash = await bcrypt.hash(password, 10);
