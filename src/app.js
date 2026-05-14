@@ -17,6 +17,7 @@ const app = express();
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
   process.env.GATEWAY_URL  || 'http://localhost:3000',
+  'https://macanan-it.site',
 ];
 app.use(cors({
   origin: (origin, cb) => {
